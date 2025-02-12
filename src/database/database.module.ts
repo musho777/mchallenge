@@ -1,21 +1,25 @@
 import { Module } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Client } from 'pg';
+
+export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
+
+const databaseProvider = {
+  provide: DATABASE_CONNECTION,
+  useFactory: async () => {
+    const client = new Client({
+      user: 'postgres',
+      host: 'localhost',
+      database: 'test',
+      password: 'm585828',
+      port: 5434,
+    });
+    await client.connect();
+    return client;
+  },
+};
 
 @Module({
-  providers: [
-    {
-      provide: 'DATABASE_CONNECTION',
-      useFactory: () => {
-        return new Pool({
-          host: 'localhost',
-          port: 5434,
-          user: 'postgres',
-          password: 'm585828',
-          database: 'test',
-        });
-      },
-    },
-  ],
-  exports: ['DATABASE_CONNECTION'],
+  providers: [databaseProvider],
+  exports: [databaseProvider],
 })
 export class DatabaseModule { }

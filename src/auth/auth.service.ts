@@ -12,7 +12,6 @@ export class AuthService {
   ) { }
 
   async signUp(name: string, surname: string, email: string, password: string, age: number,): Promise<{ message: string }> {
-    console.log(name, surname, email, password, age)
     const existingUser = await this.usersService.findOne(name);
     if (existingUser) {
       throw new ConflictException('Username already exists');
