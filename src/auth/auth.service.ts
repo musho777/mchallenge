@@ -32,27 +32,10 @@ export class AuthService {
     if (user?.password !== pass) {
       throw new UnauthorizedException();
     }
-    const payload = { sub: user.userId, name: user.name };
+    const payload = { id: user.id, name: user.name };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
-  }
-
-  async followUser(
-    currentUsername: string,
-    usernameToFollow: string
-  ): Promise<void> {
-    const currentUser = await this.usersService.findOne(currentUsername);
-    const userToFollow = await this.usersService.findOne(usernameToFollow);
-    if (!currentUser || !userToFollow) {
-      throw new UnauthorizedException('User not found');
-    }
-    await this.usersService.followUser(currentUser.userid, userToFollow.userid);
-  }
-
-  async searchUsers(query: string): Promise<any[]> {
-    const result = await this.usersService.searchUsers(query)
-    return result;
   }
 
 }
