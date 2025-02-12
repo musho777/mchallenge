@@ -11,26 +11,28 @@ export class AuthService {
     private jwtService: JwtService
   ) { }
 
-  async signUp(username: string, pass: string): Promise<{ message: string }> {
-    const existingUser = await this.usersService.findOne(username);
+  async signUp(name: string, surname: string, email: string, password: string, age: number,): Promise<{ message: string }> {
+    console.log(name, surname, email, password, age)
+    const existingUser = await this.usersService.findOne(name);
     if (existingUser) {
       throw new ConflictException('Username already exists');
     }
 
-    const hashedPassword = pass;
-    await this.usersService.createUser(username, hashedPassword);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await this.usersService.createUser(name, surname, email, hashedPassword, age);
 
     return { message: 'User registered successfully' };
   }
+
   async signIn(
-    username: string,
+    name: string,
     pass: string,
   ): Promise<{ access_token: string }> {
-    const user = await this.usersService.findOne(username);
+    const user = await this.usersService.findOne(name);
     if (user?.password !== pass) {
       throw new UnauthorizedException();
     }
-    const payload = { sub: user.userId, username: user.username };
+    const payload = { sub: user.userId, name: user.name };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
@@ -45,9 +47,12 @@ export class AuthService {
     if (!currentUser || !userToFollow) {
       throw new UnauthorizedException('User not found');
     }
-
-    // Call the UsersService to add the follower
     await this.usersService.followUser(currentUser.userid, userToFollow.userid);
+  }
+
+  async searchUsers(query: string): Promise<any[]> {
+    const result = await this.usersService.searchUsers(query)
+    return result;
   }
 
 }

@@ -1,16 +1,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { Client } from 'pg';
-// This should be a real class/interface representing a user entity
 export type User = any;
-
-// const pool = new Pool({
-//   user: 'postgres',  // Replace with your PostgreSQL username
-//   host: 'localhost',      // Replace with your PostgreSQL host
-//   database: 'test', // Replace with your database name
-//   password: 'm585828',  // Replace with your PostgreSQL password
-//   port: 5434,            // Default PostgreSQL port
-// });
 
 @Injectable()
 export class UsersService {
@@ -19,31 +10,30 @@ export class UsersService {
 
   constructor() {
     this.client = new Client({
-      user: 'postgres',  // Replace with your PostgreSQL username
-      host: 'localhost',      // Replace with your PostgreSQL host
-      database: 'test', // Replace with your database name
-      password: 'm585828',  // Replace with your PostgreSQL password
+      user: 'postgres',
+      host: 'localhost',
+      database: 'test',
+      password: 'm585828',
       port: 5434,
     });
-    this.client.connect();  // Make sure to connect to the PostgreSQL database
+    this.client.connect();
   }
 
-  async findOne(username: string): Promise<User | undefined> {
-    const res = await this.client.query('SELECT * FROM users WHERE username = $1', [username]);
+  async findOne(name: string): Promise<User | undefined> {
+    const res = await this.client.query('SELECT * FROM users WHERE name = $1', [name]);
     if (res.rows.length > 0) {
-      return res.rows[0];  // Returning the user from the query result
+      return res.rows[0];
     }
-    return undefined;  // If no user is found
+    return undefined;
   }
-  async createUser(username: string, password: string): Promise<void> {
-    // Insert the new user into the database
+  async createUser(name: string, surname: string, email: string, password: string, age: number): Promise<void> {
+    console.log(name, surname, email, password, age)
     await this.client.query(
-      'INSERT INTO users (username, password) VALUES ($1, $2)',
-      [username, password],
+      'INSERT INTO users (name, surname, email, password, age) VALUES ($1, $2, $3, $4, $5 )',
+      [name, surname, email, password, age],
     );
   }
   async followUser(currentUserId: number, userIdToFollow: number): Promise<void> {
-    console.log(currentUserId, userIdToFollow)
     const userCheckQuery = `
       SELECT * FROM users WHERE userid IN ($1, $2)
     `;
@@ -52,13 +42,9 @@ export class UsersService {
     if (userCheckResult.rows.length !== 2) {
       throw new Error('User not found');
     }
-
-    // Check if the current user is trying to follow themselves
     if (currentUserId === userIdToFollow) {
       throw new Error('Cannot follow yourself');
     }
-
-    // Check if the user is already following the target user
     const followCheckQuery = `
       SELECT * FROM followers WHERE userid = $1 AND followerid = $2
     `;
@@ -74,4 +60,14 @@ export class UsersService {
     `;
     await this.client.query(insertFollowQuery, [userIdToFollow, currentUserId]);
   }
+
+  async searchUsers(query: string): Promise<any[]> {
+    console.log(query, 'query')
+    const result = await this.client.query(
+      'SELECT * FROM users WHERE name ILIKE $1 OR surname ILIKE $1 OR CAST(age AS TEXT) ILIKE $1',
+      [`%${query}%`]
+    );
+    return result.rows;
+  }
+
 }

@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Request,
   UseGuards
 } from '@nestjs/common';
@@ -19,7 +20,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+    return this.authService.signIn(signInDto.name, signInDto.password);
+  }
+  @UseGuards(AuthGuard)
+
+  @Get('search')
+  async search(@Query('q') query: string) {
+    console.log(query, 'query')
+    return this.authService.searchUsers(query);
   }
 
   @UseGuards(AuthGuard)
@@ -29,7 +37,7 @@ export class AuthController {
   }
   @Post('signup')
   async signUp(@Body() signUpDto: Record<string, any>) {
-    return this.authService.signUp(signUpDto.username, signUpDto.password);
+    return this.authService.signUp(signUpDto.name, signUpDto.surname, signUpDto.email, signUpDto.password, signUpDto.age);
   }
   @UseGuards(AuthGuard)
   @Post('follow')
@@ -37,9 +45,9 @@ export class AuthController {
     @Body() followDto: { usernameToFollow: string },
     @Request() req
   ) {
-    const currentUsername = req.user.username;
-    console.log(followDto.usernameToFollow)
+    const currentUsername = req.user.name;
     await this.authService.followUser(currentUsername, followDto.usernameToFollow);
     return { message: `You are now following ${followDto.usernameToFollow}` };
   }
+
 }
